@@ -11,6 +11,7 @@ var getTrader = new RegExp('/client/trading/api/getTrader/', 'i');
 var traderImg = new RegExp('/files/([a-z0-9/\.jpng])+', 'i');
 var content = new RegExp('/uploads/([a-z0-9/\.jpng_])+', 'i');
 var pushNotifier = new RegExp('/push/notifier/get/', 'i');
+var LocationForBots = "";
 var ItemOutput = "";
 var tmpItem = {};
 var tmpSize = {};
@@ -292,6 +293,45 @@ function handleMoving(body) {
 			break;
 	}
 }
+function prepareRandomBot(body){
+	//use premaded bots for now still working on creating
+	var response="";
+	console.log(LocationForBots);
+	if(LocationForBots != "")
+	return ReadJson('bot/' + LocationForBots + '.json');
+	else 
+	return ReadJson('bot/bot_generate2.json');
+	//have an error with reading created data like this
+	if(body != "{}")
+	var BODY = JSON.parse(body);
+	else
+	var BODY = JSON.parse('{"conditions":[{"Role":"assault","Limit":9,"Difficulty":"normal"},{"Role":"assault","Limit":4,"Difficulty":"hard"}]}');//to test via browser its faster
+	var botTable = JSON.parse(ReadJson('bot/bot_generate.json'));
+	var maxIndex = botTable.database.length;
+	var out='{"err": 0,"errmsg": null,"data": [';
+	for (var n in BODY.conditions){
+		for(var j = 0; j < BODY.conditions[n].Limit; j++){
+			var index = getRandomInt(0, maxIndex-1);
+			var tempTable = botTable.database[index];
+			var hash_eq = tempTable.Inventory.equipment;
+			var hash_st = tempTable.Inventory.stash;
+			var hash_qr = tempTable.Inventory.questRaidItems;
+			var hash_qs = tempTable.Inventory.questStashItems;
+			var new_hash_eq = setID();
+			var new_hash_st = setID();
+			var new_hash_qr = setID();
+			var new_hash_qs = setID();
+			var prepareInventory = JSON.stringify(tempTable.Inventory);
+			prepareInventory = prepareInventory.replace(hash_eq, new_hash_eq).replace(hash_st, new_hash_st).replace(hash_qr, new_hash_qr).replace(hash_qs, new_hash_qs);
+			out += '{"_id": "' + setID() + '", "aid": 0,"savage": null,"Info": {"Nickname": "' + tempTable.Info.Nickname + '","LowerNickname": "","Side": "' + tempTable.Info.Side + '","Voice": "' + tempTable.Info.Voice + '","Level": 1,"Experience": 0,"RegistrationDate": 0,"GameVersion": "","AccountType": 0,"MemberCategory": 0,"lockedMoveCommands": false,"LastTimePlayedAsSavage": 0,"Settings":{"Role": "' + tempTable.Info.Settings.Role + '","BotDifficulty": "' + tempTable.Info.Settings.BotDifficulty + '","Experience": -1},"NeedWipe": false,"GlobalWipe": false,"NicknameChangeDate": 0},"Customization": ' + JSON.stringify(tempTable.Customization) + ', ' + '"Health": ' + JSON.stringify(tempTable.Health) + ',"Inventory": ' + prepareInventory + ',"Skills": {"Common": null,"Mastering": [],"Points": 0},"Stats": {"SessionCounters": {"Items": []},"OverallCounters": {"Items": []}},"Encyclopedia": null,"ConditionCounters": {"Counters": []}, "BackendCounters": {},"InsuredItems": []}';
+			if(n != (BODY.conditions.length - 1) || (n == (BODY.conditions.length - 1) && j != BODY.conditions[n].Limit))
+			out += ',';
+		}
+	}
+	out += ']}';
+	//console.log(out);
+	return out;
+}
 function handleRequest(req, body, url) {
 	var info = JSON.parse("{}");
 	if (body != "") {
@@ -349,6 +389,14 @@ function handleRequest(req, body, url) {
 		case "/client/friend/request/list/inbox":
 			FinalOutput = '{"err":0, "errmsg":null, "data":[]}';
 			break;
+		case "/client/match/group/looking/stop":
+		case "/client/match/group/exit_from_menu":
+			break;
+		case "/client/match/group/status":
+		var NewLocation = JSON.parse(body);
+			console.log(NewLocation.location);
+			LocationForBots = NewLocation.location;
+			break;
 		case "/client/languages":
 			FinalOutput = '{"err":0, "errmsg":null, "data":[{"ShortName":"en", "Name":"English"}, {"ShortName":"ru", "Name":"Русский"}], "crc":0}';
 			break;
@@ -398,7 +446,7 @@ function handleRequest(req, body, url) {
 			FinalOutput = ReadJson('quest_list.json');
 			break;
 		case "/client/game/bot/generate":
-			FinalOutput = ReadJson('bot_generate.json');
+			FinalOutput = prepareRandomBot(body);
 			break;
 		case "/client/trading/api/getTradersList":
 			FinalOutput = ReadJson('traderList.json');
