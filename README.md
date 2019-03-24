@@ -1,4 +1,24 @@
+#############################
+# EMU Tarkov PK Edition
+#
+# Working to better the Emulator and contribute all I can.
+# This Version By:
+# Panic Kode
+#
+# Currently Tested on: 0.11.5.2780
+#############################
+
+# Changes Made
+-Updated Customs map boss spawn values - No more errors
+	- Issue: Boss Spawns - Stands Still - No Gear - No Escort
+-Added 52 Custom Bots to Labs - pmcBot
+-Added random bots to fill calls in labs
+-Merged Bot Calls and Generator from theMaoci
+
+
+#############################
 # EmuTarkov
+#############################
 Escape From Tarkov backend emulator written in JS.
 
 # How to use?
